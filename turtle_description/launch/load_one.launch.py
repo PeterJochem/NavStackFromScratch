@@ -1,41 +1,60 @@
-import launch
 from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
-from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
-import os
+from launch.actions import DeclareLaunchArgument, Shutdown, SetLaunchConfiguration
+from launch_ros.parameter_descriptions import ParameterValue
+from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution, \
+                                 TextSubstitution
+from launch.conditions import LaunchConfigurationEquals
+from launch_ros.substitutions import FindPackageShare
+
 
 def generate_launch_description():
+    return LaunchDescription([
+          DeclareLaunchArgument(name='use_jsp', default_value='true',
+                                choices=['true', 'false'],
+                                description='Choose if joint_state_publisher is launched'),
+          DeclareLaunchArgument(name='use_rviz', default_value='true',
+                                choices=['true', 'false'],
+                                description='Choose if rviz is launched'),
+          DeclareLaunchArgument(name='color', default_value='light_black',
+                                choices=['light_black', 'red', 'green', 'blue'],
+                                description='Change the color of the turtlebot'),
 
-    use_sim_time = DeclareLaunchArgument('use_sim_time', default_value='true', description='Controls if the simulation (Gazebo) clock is used.')
-    use_jsp = DeclareLaunchArgument('use_jsp', default_value='true', description='Controls if the joint state publisher is launched to publish default joint values.')
-    start_rviz = DeclareLaunchArgument('start_rviz', default_value='true', description='Controls whether to start rviz2 or not.')
-    rviz_config_dir = DeclareLaunchArgument('rviz_config_dir', default_value='true', description='Location of RVIZ config.')
-    use_jsp = DeclareLaunchArgument('use_jsp', default_value='true', description='Controls whether the joint state publisher is used to publish default joint states.')
-        
-    # Configure the robot state publisher.
-    urdf_file_name = "turtlebot3_burger.urdf"
-    print(f"urdf_file_name : urdf_file_name")
-    urdf = os.path.join(
-        get_package_share_directory('turtle_description'),
-        'urdf',
-        urdf_file_name)
+          SetLaunchConfiguration(name='config_file',
+                                 value=[TextSubstitution(text='basic_'),
+                                        LaunchConfiguration('color'),
+                                        TextSubstitution(text='.rviz')]),
+          SetLaunchConfiguration(name='model',
+                                 value=PathJoinSubstitution(
+                                   [FindPackageShare('turtle_description'),
+                                    'urdf',
+                                    'turtlebot3_burger.urdf.xacro'])),
+          SetLaunchConfiguration(name='rvizconfig',
+                                 value=PathJoinSubstitution(
+                                   [FindPackageShare('turtle_description'),
+                                    'config',
+                                    LaunchConfiguration('config_file')])),
 
-    with open(urdf, 'r') as infp:
-        robot_description = infp.read()
+          Node(package='joint_state_publisher',
+               executable='joint_state_publisher',
+               condition=LaunchConfigurationEquals('use_jsp', 'true'),
+               namespace=PathJoinSubstitution([LaunchConfiguration('color')])),
 
-    rsp_params = {'robot_description': robot_description}
-    robot_state_publisher_node = Node(package='robot_state_publisher', executable='robot_state_publisher', output='screen', parameters=[rsp_params, {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')}]) 
+          Node(package='robot_state_publisher',
+               executable='robot_state_publisher',
+               parameters=[{'robot_description':
+                            ParameterValue(Command(['xacro ',
+                                                    LaunchConfiguration('model'),
+                                                    ' color:=',
+                                                    LaunchConfiguration('color')]),
+                                           value_type=str)}],
+               namespace=PathJoinSubstitution([LaunchConfiguration('color')])),
 
-    rviz_node = Node(package='rviz2', executable='rviz2', name='rviz2', output='screen', arguments=['-d', [os.path.join(get_package_share_directory('turtle_description'), 'config', 'config.rviz')]], on_exit=launch.actions.Shutdown())
-    joint_state_publisher_node = Node(package="joint_state_publisher", executable="joint_state_publisher", name="joint_state_publisher")
-
-    nodes = [robot_state_publisher_node]
-    if launch.substitutions.LaunchConfiguration('start_rviz'):
-        nodes.append(rviz_node)
-    if launch.substitutions.LaunchConfiguration('use_jsp'):
-        nodes.append(joint_state_publisher_node)
-
-    arguments = [use_sim_time, start_rviz, use_jsp]
-    return LaunchDescription(arguments + nodes)
+          Node(package='rviz2',
+               executable='rviz2',
+               name='rviz2',
+               arguments=['-d', LaunchConfiguration('rvizconfig'),
+                          '-f', PathJoinSubstitution([LaunchConfiguration('color'), 'base_link'])],
+               condition=LaunchConfigurationEquals('use_rviz', 'true'),
+               namespace=PathJoinSubstitution([LaunchConfiguration('color')]),
+               on_exit=Shutdown())])
