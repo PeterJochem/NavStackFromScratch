@@ -14,6 +14,16 @@ double rotation_angle(const Eigen::MatrixXd& matrix) {
     return std::atan2(sin_theta, cos_theta);
 }
 
+Vector2D Vector2D::normalize() const {
+    double magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+    Vector2D normalized_vector;
+    normalized_vector.x = x / magnitude;
+    normalized_vector.y = y / magnitude;
+
+    return normalized_vector;
+}
+
+
 std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
     os << "[" << v.x << ", " << v.y << "]";
     return os;
@@ -244,12 +254,107 @@ std::istream & operator>>(std::istream & is, Transform2D & transform) {
     y.erase(std::remove(y.begin(), y.end(), ' '), y.end());
     angle.erase(std::remove(angle.begin(), angle.end(), ' '), angle.end());
 
-    std::cout << x << y << angle << std::endl << std::flush;
-
     transform.set_translation(Vector2D(stod(x), stod(y)));
     transform.set_rotation(stod(angle));
 
     return is;
+}
+
+Twist2D::Twist2D() {
+    theta = 0.0;
+    x = 0.0;
+    y = 0.0;
+}
+
+std::ostream & operator<<(std::ostream & os, const Twist2D & twist) {
+    
+    os << "[" << twist.theta << ", " << twist.x << ", " << twist.y << "]";
+    return os;
+}
+
+std::istream & operator>>(std::istream & is, Twist2D & twist) {
+
+    std::string s;
+    std::getline(is, s);
+
+    if (s.size() < 9) {
+        throw std::runtime_error("The input stream is too short to contain a Twist2D.");
+    }
+
+    bool has_opening_bracket = s[0] == '[';
+    bool has_closing_bracket = s[s.size() - 1] == ']';
+
+    if (has_opening_bracket != has_closing_bracket) {
+        throw std::runtime_error("The stream does not conform to the input pattern for a Twist2D.");
+    }
+    else if (has_opening_bracket && has_closing_bracket) {
+        s = s.substr(1, s.size() - 2);
+    }
+
+    std::string delimiter = ",";
+    size_t pos = 0;
+    std::string x, y, theta, rest;
+    if ((pos = s.find(delimiter)) != std::string::npos) {
+        theta = s.substr(0, pos);
+        rest = s.substr(pos + 1, s.size());
+    }
+    else { 
+        throw std::runtime_error("The stream does not conform to the input pattern for a Twist2D.");
+    }
+
+    if ((pos = rest.find(delimiter)) != std::string::npos) {
+        x = rest.substr(0, pos);
+        y = rest.substr(pos + 1, rest.size());
+    }
+    else { 
+        throw std::runtime_error("The stream does not conform to the input pattern for a Twist2D.");
+    }
+
+    // Remove whitespace
+    x.erase(std::remove(x.begin(), x.end(), ' '), x.end());
+    y.erase(std::remove(y.begin(), y.end(), ' '), y.end());
+    theta.erase(std::remove(theta.begin(), theta.end(), ' '), theta.end());
+
+    twist.x = stod(x), 
+    twist.y = stod(y);
+    twist.theta = stod(theta);
+
+    return is;
+}
+
+Eigen::MatrixXd Transform2D::adjoint() const {
+
+    Eigen::MatrixXd adjoint_matrix = Eigen::MatrixXd::Identity(3, 3);
+    auto position = translation();
+    double theta = rotation();
+    adjoint_matrix(1, 0) = position.x;
+    adjoint_matrix(2, 0) = -position.y;
+    
+    adjoint_matrix(1, 1) = cos(theta);
+    adjoint_matrix(1, 2) = -sin(theta);
+
+    adjoint_matrix(2, 1) = sin(theta);
+    adjoint_matrix(2, 2) = cos(theta);
+
+    return adjoint_matrix;
+}
+
+
+Twist2D Transform2D::transform(const Twist2D& twist) {
+
+    Eigen::MatrixXd twist_vector = Eigen::MatrixXd(3, 1);
+    twist_vector(0, 0) = twist.theta;
+    twist_vector(1, 0) = twist.x;
+    twist_vector(2, 0) = twist.y;
+
+    Eigen::MatrixXd transformed_matrix = adjoint() * twist_vector;
+
+    Twist2D transformed_twist;
+    transformed_twist.theta = transformed_matrix(0, 0);
+    transformed_twist.x = transformed_matrix(1, 0);
+    transformed_twist.y = transformed_matrix(2, 0);
+
+    return transformed_twist;
 }
 
 }
@@ -266,10 +371,14 @@ int main() {
     //std::cin >> v;
     //std::cout << v << std::endl;
 
-    Transform2D transform = Transform2D();
-    std::cin >> transform;
-    std::cout << transform << std::endl;
-    std::cout << transform.matrix << std::endl;
+    //Transform2D transform = Transform2D();
+    //std::cin >> transform;
+    //std::cout << transform << std::endl;
+    //std::cout << transform.matrix << std::endl;
+
+    Twist2D twist = Twist2D();
+    std::cin >> twist;
+    std::cout << twist<< std::endl;
 
     return 0;
 }

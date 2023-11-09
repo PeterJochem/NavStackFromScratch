@@ -63,7 +63,31 @@ namespace turtlelib
         double y = 0.0;
         Vector2D(double, double);
         Vector2D();
+        Vector2D normalize() const;
     };
+
+    class Twist2D {
+        public:
+            Twist2D();
+            double theta;
+            double x;
+            double y;
+
+            // \brief \see operator<<(...) (declared outside this class)
+            /// for a description
+            friend std::ostream & operator<<(std::ostream&, const Twist2D&);
+
+            // \brief \see operator<<(...) (declared outside this class)
+            /// for a description
+            friend std::istream & operator>>(std::istream & is, Twist2D & twist);
+    };
+    
+    //Describe me.
+    std::ostream & operator<<(std::ostream & os, const Twist2D & twist);
+
+    // Describe me.
+    std::istream & operator>>(std::istream & is, Twist2D & twist);
+
 
     /// \brief Computes the rotation about the z-axis from a 2D rotation matrix.
     /// \param Eigen::MatrixXd - Represents a 2D rotation matrix. 
@@ -140,6 +164,9 @@ namespace turtlelib
 
         Eigen::MatrixXd matrix;
 
+        Eigen::MatrixXd adjoint() const;
+        Twist2D transform(const Twist2D&);
+
         private:
             //Eigen::MatrixXd matrix;
             void set_rotation(Eigen::MatrixXd&, double radians);
@@ -167,6 +194,7 @@ namespace turtlelib
     /// \param rhs - the right hand operand
     /// \return the composition of the two transforms
     Transform2D operator*(Transform2D& lhs, const Transform2D & rhs);
+
 }
 
 #endif
