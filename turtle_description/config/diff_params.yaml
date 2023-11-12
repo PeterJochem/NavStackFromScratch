@@ -1,0 +1,7 @@
+wheel_radius: 0.033
+track_width: 0.16 # The distance between the two wheels.
+motor_cmd_max: 256
+motor_cmd_per_rad_sec: 2
+encoder_ticks_per_rad:
+body_collision_radius: 0.11 # Defines a cylindrical collision object around the robot's base.
+body_collision_height: 0.140 # Defines a cylindrical collision object around the robot's base.

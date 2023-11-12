@@ -64,6 +64,8 @@ namespace turtlelib
         Vector2D(double, double);
         Vector2D();
         Vector2D normalize() const;
+        bool operator == (Vector2D &rhs);
+        float magnitude() const;
         friend std::ostream & operator<<(std::ostream&, const Vector2D&);
     };
 
@@ -77,6 +79,8 @@ namespace turtlelib
             double theta;
             double x;
             double y;
+
+            bool operator == (Twist2D &rhs);
 
             // \brief \see operator<<(...) (declared outside this class)
             /// for a description

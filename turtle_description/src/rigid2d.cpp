@@ -1,4 +1,4 @@
-#include "rigid2d.hpp"
+#include "turtlelib/rigid2d.hpp"
 
 namespace turtlelib
 {
@@ -26,6 +26,13 @@ Vector2D Vector2D::normalize() const {
     return normalized_vector;
 }
 
+bool Vector2D::operator == (Vector2D &rhs) {
+    return almost_equal(x, rhs.x) && almost_equal(y, rhs.y);
+}
+
+float Vector2D::magnitude() const {
+    return sqrt((x * x) + (y * y));
+}
 
 std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
     os << "[" << v.x << ", " << v.y << "]";
@@ -267,6 +274,10 @@ Twist2D::Twist2D() {
     theta = 0.0;
     x = 0.0;
     y = 0.0;
+}
+
+bool Twist2D::operator == (Twist2D &rhs) {
+    return (theta == rhs.theta) && (x == rhs.x) && (y == rhs.y);
 }
 
 Twist2D::Twist2D(float x, float y, float theta) {
