@@ -13,6 +13,7 @@ struct Test_Vector2D_Input: public testing::TestWithParam<std::tuple<string, Vec
 struct Test_Vector2D_Normalization: public testing::TestWithParam<Vector2D> {};
 struct Test_Twist2D_Input: public testing::TestWithParam<std::tuple<string, Twist2D>> {};
 struct Test_Transform2D_Constructors: public testing::TestWithParam<std::tuple<Transform2D, float, float, float>> {};
+struct Test_Transforming_Vector: public testing::TestWithParam<std::tuple<Transform2D, Vector2D, Vector2D>> {};
 
 
 
@@ -57,9 +58,21 @@ TEST_P(Test_Transform2D_Constructors, transform_2d_constructors) {
     float expected_theta = std::get<3>(GetParam());
     Vector2D position = input.translation();
 
-    EXPECT_TRUE(position.x == expected_x);
-    EXPECT_TRUE(position.y == expected_y);
-    EXPECT_TRUE(input.rotation() == expected_theta);
+    EXPECT_TRUE(almost_equal(position.x, expected_x));
+    EXPECT_TRUE(almost_equal(position.y, expected_y));
+    EXPECT_TRUE(almost_equal(input.rotation(), expected_theta, 0.001));
+}
+
+
+TEST_P(Test_Transforming_Vector, transform_vector) {
+
+    Transform2D transform = std::get<0>(GetParam());
+    Vector2D input_vector = std::get<1>(GetParam());
+    Vector2D expected_transformed_vector = std::get<2>(GetParam());
+
+    Vector2D transformed_vector = transform(input_vector);
+
+    EXPECT_TRUE(transformed_vector == expected_transformed_vector);
 }
 
 
@@ -91,21 +104,17 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     transform_2d_constructors_test_suite,
     Test_Transform2D_Constructors,
-    testing::Values(std::make_tuple(Transform2D(Vector2D(0., 0.), 2.), 0., 0., 2.),
-                    std::make_tuple(Transform2D(Vector2D(1, 2.), -0.5), 1., 2., -0.5)       
-                    
+    testing::Values(std::make_tuple(Transform2D(), 0., 0., 0.),
+                    std::make_tuple(Transform2D(3.1), 0., 0., 3.1),
+                    std::make_tuple(Transform2D(Vector2D(0., 0.), 2.), 0., 0., 2.),
+                    std::make_tuple(Transform2D(Vector2D(1, 2.), -0.5), 1., 2., -0.5)
     ));
 
-
-TEST(rigid2d, vector){
-
-    Vector2D v;
-    ASSERT_EQ(4, 2 + 2);
-}
-
-
-
-
+INSTANTIATE_TEST_SUITE_P(
+    transform_vectors_test_suite,
+    Test_Transforming_Vector,
+    testing::Values(std::make_tuple(Transform2D(), Vector2D(10., 20.), Vector2D(10., 20.))
+    ));
 
 
 

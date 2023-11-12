@@ -94,6 +94,12 @@ Transform2D::Transform2D() {
 
 }
 
+bool Transform2D::operator == (const Transform2D& rhs) {
+
+    auto rhs_translation = rhs.translation();
+    return (translation() == rhs_translation) && almost_equal(rotation(), rhs.rotation());
+}
+
 void Transform2D::set_rotation(Eigen::MatrixXd& matrix, double radians) {
     double cos_theta = std::cos(radians);
     double sin_theta = std::sin(radians);
@@ -277,7 +283,7 @@ Twist2D::Twist2D() {
 }
 
 bool Twist2D::operator == (Twist2D &rhs) {
-    return (theta == rhs.theta) && (x == rhs.x) && (y == rhs.y);
+    return almost_equal(theta, rhs.theta) && almost_equal(x, rhs.x) && almost_equal(y, rhs.y);
 }
 
 Twist2D::Twist2D(float x, float y, float theta) {

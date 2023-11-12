@@ -143,6 +143,9 @@ namespace turtlelib
 
         Twist2D operator()(const Twist2D& twist);
 
+        bool operator == (const Transform2D&);
+        
+
         /// \brief invert the transformation
         /// \return the inverse transformation. 
         Transform2D inv() const;
