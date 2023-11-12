@@ -64,11 +64,16 @@ namespace turtlelib
         Vector2D(double, double);
         Vector2D();
         Vector2D normalize() const;
+        friend std::ostream & operator<<(std::ostream&, const Vector2D&);
     };
+
+    std::ostream & operator<<(std::ostream & os, const Vector2D & vector);
+
 
     class Twist2D {
         public:
             Twist2D();
+            Twist2D(float, float, float);
             double theta;
             double x;
             double y;
@@ -132,6 +137,7 @@ namespace turtlelib
         /// \return a vector in the new coordinate system
         Vector2D operator()(Vector2D v) const;
 
+        Twist2D operator()(const Twist2D& twist);
 
         /// \brief invert the transformation
         /// \return the inverse transformation. 
@@ -165,13 +171,12 @@ namespace turtlelib
         Eigen::MatrixXd matrix;
 
         Eigen::MatrixXd adjoint() const;
-        Twist2D transform(const Twist2D&);
+        void set_matrix(Eigen::MatrixXd);
 
         private:
             //Eigen::MatrixXd matrix;
             void set_rotation(Eigen::MatrixXd&, double radians);
             void set_translation(Eigen::MatrixXd&, Vector2D trans);
-            void set_matrix(Eigen::MatrixXd);
     };
 
 

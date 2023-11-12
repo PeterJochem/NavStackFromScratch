@@ -16,6 +16,9 @@ double rotation_angle(const Eigen::MatrixXd& matrix) {
 
 Vector2D Vector2D::normalize() const {
     double magnitude = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+    if (almost_equal(magnitude, 0.0)) {
+        throw std::runtime_error("Cannot normalize a vector whose magnitude is 0.");
+    }
     Vector2D normalized_vector;
     normalized_vector.x = x / magnitude;
     normalized_vector.y = y / magnitude;
@@ -98,8 +101,8 @@ void Transform2D::set_translation(Eigen::MatrixXd& matrix, Vector2D trans) {
     matrix(1, 2) = trans.y;
 }
 
-void Transform2D::set_matrix(Eigen::MatrixXd matrix) {
-    this->matrix = matrix;
+void Transform2D::set_matrix(Eigen::MatrixXd matrix2) {
+    this->matrix = matrix2;
 }
 
 Transform2D::Transform2D(Vector2D trans) {
@@ -116,29 +119,32 @@ Transform2D::Transform2D(double radians) {
 Transform2D::Transform2D(Vector2D trans, double radians) {
     matrix = Eigen::MatrixXd::Identity(3, 3);
     double cos_theta = std::cos(radians);
-    double sin_theta = std::cos(radians);
+    double sin_theta = std::sin(radians);
     matrix(0, 0) = cos_theta;
     matrix(0, 1) = -sin_theta;
     matrix(1, 0) = sin_theta;
-    matrix(1, 1) = cos_theta; 
+    matrix(1, 1) = cos_theta;
+    
+    matrix(0, 2) = trans.x;
+    matrix(1, 2) = trans.y;
 }
 
 Vector2D Transform2D::operator()(Vector2D v) const {
 
-    auto homogenous_column_vector = Eigen::MatrixXd(3, 1);
+    Eigen::MatrixXd homogenous_column_vector = Eigen::MatrixXd(3, 1);
     homogenous_column_vector(0, 0) = v.x;
-    homogenous_column_vector(0, 1) = v.y;
-    homogenous_column_vector(0, 2) = 1.0;
+    homogenous_column_vector(1, 0) = v.y;
+    homogenous_column_vector(2, 0) = 1.0;
 
-    auto v_transformed = matrix * homogenous_column_vector;
+    Eigen::MatrixXd v_transformed = matrix * homogenous_column_vector;
     double x = v_transformed(0, 0);
-    double y = homogenous_column_vector(0, 1);
+    double y = v_transformed(1, 0);
     return Vector2D(x, y);
 }
 
 Transform2D Transform2D::inv() const {
-    
-    double theta = rotation_angle(matrix);
+
+    double theta = rotation_angle(this->matrix);
     /*
     auto transform = translation();
     double cos_theta = cos(theta);
@@ -165,12 +171,6 @@ Eigen::MatrixXd Transform2D::get_matrix() const {
     return matrix;
 }
 
-Transform2D Transform2D::operator*(const Transform2D & rhs) const {
-    auto resulting_matrix = matrix * rhs.get_matrix();
-    Transform2D result;
-    result.set_matrix(resulting_matrix);
-    return result;
-}
 
 Transform2D & Transform2D::operator*=(const Transform2D & rhs) {
     auto resulting_matrix = matrix * rhs.get_matrix();
@@ -208,7 +208,10 @@ std::ostream & operator<<(std::ostream & os, const Transform2D & transform) {
 }
 
 Transform2D operator*(Transform2D& lhs, const Transform2D & rhs) {
-    return lhs * rhs;
+    Eigen::MatrixXd resulting_matrix = lhs.get_matrix() * rhs.get_matrix();
+    Transform2D result;
+    result.set_matrix(resulting_matrix);
+    return result;
 }
 
 std::istream & operator>>(std::istream & is, Transform2D & transform) {
@@ -264,6 +267,12 @@ Twist2D::Twist2D() {
     theta = 0.0;
     x = 0.0;
     y = 0.0;
+}
+
+Twist2D::Twist2D(float x, float y, float theta) {
+    this->x = x;
+    this->y = y;
+    this->theta = theta;
 }
 
 std::ostream & operator<<(std::ostream & os, const Twist2D & twist) {
@@ -325,10 +334,10 @@ std::istream & operator>>(std::istream & is, Twist2D & twist) {
 Eigen::MatrixXd Transform2D::adjoint() const {
 
     Eigen::MatrixXd adjoint_matrix = Eigen::MatrixXd::Identity(3, 3);
-    auto position = translation();
+    Vector2D position = translation();
     double theta = rotation();
-    adjoint_matrix(1, 0) = position.x;
-    adjoint_matrix(2, 0) = -position.y;
+    adjoint_matrix(2, 0) = -position.x;
+    adjoint_matrix(1, 0) = position.y;
     
     adjoint_matrix(1, 1) = cos(theta);
     adjoint_matrix(1, 2) = -sin(theta);
@@ -340,7 +349,7 @@ Eigen::MatrixXd Transform2D::adjoint() const {
 }
 
 
-Twist2D Transform2D::transform(const Twist2D& twist) {
+Twist2D Transform2D::operator()(const Twist2D& twist) {
 
     Eigen::MatrixXd twist_vector = Eigen::MatrixXd(3, 1);
     twist_vector(0, 0) = twist.theta;
@@ -359,6 +368,7 @@ Twist2D Transform2D::transform(const Twist2D& twist) {
 
 }
 
+/*
 int main() {
 
     using namespace turtlelib;
@@ -382,3 +392,4 @@ int main() {
 
     return 0;
 }
+*/
