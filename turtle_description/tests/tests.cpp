@@ -14,6 +14,11 @@ struct Test_Vector2D_Normalization: public testing::TestWithParam<Vector2D> {};
 struct Test_Twist2D_Input: public testing::TestWithParam<std::tuple<string, Twist2D>> {};
 struct Test_Transform2D_Constructors: public testing::TestWithParam<std::tuple<Transform2D, float, float, float>> {};
 struct Test_Transforming_Vector: public testing::TestWithParam<std::tuple<Transform2D, Vector2D, Vector2D>> {};
+struct Test_Transforming_Twist2D: public testing::TestWithParam<std::tuple<Transform2D, Twist2D, Twist2D>> {};
+struct Test_Transform_Equals: public testing::TestWithParam<std::tuple<Transform2D, Transform2D, bool>> {};
+struct Test_Transform_Inverse: public testing::TestWithParam<Transform2D> {};
+struct Test_Transform_Composition: public testing::TestWithParam<std::tuple<Transform2D, Transform2D, Transform2D>> {};
+
 
 
 
@@ -75,8 +80,40 @@ TEST_P(Test_Transforming_Vector, transform_vector) {
     EXPECT_TRUE(transformed_vector == expected_transformed_vector);
 }
 
+TEST_P(Test_Transforming_Twist2D, transform_twist) {
+
+    Transform2D transform = std::get<0>(GetParam());
+    Twist2D input_twist = std::get<1>(GetParam());
+    Twist2D expected_twist = std::get<2>(GetParam());
+
+    Twist2D transformed_twist = transform(input_twist);
+
+    EXPECT_TRUE(transformed_twist == expected_twist);
+}
 
 
+TEST_P(Test_Transform_Equals, transform_equals) {
+
+    Transform2D transform_1 = std::get<0>(GetParam());
+    Transform2D transform_2 = std::get<1>(GetParam());
+    bool expected_equal = std::get<2>(GetParam());
+
+    EXPECT_TRUE((transform_1 == transform_2) == expected_equal);
+}
+
+TEST_P(Test_Transform_Inverse, transform_inverse) {
+
+    Transform2D transform = GetParam();
+    EXPECT_TRUE(transform == transform.inv().inv());
+}
+
+TEST_P(Test_Transform_Composition, transform_composition) {
+
+    Transform2D a_b = std::get<0>(GetParam());
+    Transform2D b_c = std::get<1>(GetParam());
+    Transform2D a_c = std::get<2>(GetParam());
+    EXPECT_TRUE((a_b * b_c) == a_c);
+}
 
 INSTANTIATE_TEST_SUITE_P(
     read_vector2d_test_suite,
@@ -116,8 +153,45 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(std::make_tuple(Transform2D(), Vector2D(10., 20.), Vector2D(10., 20.))
     ));
 
+INSTANTIATE_TEST_SUITE_P(
+    transform_twists_test_suite,
+    Test_Transforming_Twist2D,
+    testing::Values(std::make_tuple(Transform2D(), Twist2D(0., 0., 0.), Twist2D(0., 0., 0.)),
+                    std::make_tuple(Transform2D(Vector2D(0., 1.), deg2rad(90)), Twist2D(1., 1., 1.), Twist2D(0., 1., 1.))
+));
 
+INSTANTIATE_TEST_SUITE_P(
+    transform_equals_test_suite,
+    Test_Transform_Equals,
+    testing::Values(std::make_tuple(Transform2D(), Transform2D(), true),
+                    std::make_tuple(Transform2D(PI), Transform2D(PI), true),
+                    std::make_tuple(Transform2D(PI/2), Transform2D(PI), false)
 
+));
+
+INSTANTIATE_TEST_SUITE_P(
+    transform_inverse_test_suite,
+    Test_Transform_Inverse,
+    testing::Values(Transform2D(), 
+                    Transform2D(Vector2D(1., 2.), PI),
+                    Transform2D(1.95),
+                    Transform2D(Vector2D(1., 2.))
+
+));
+
+INSTANTIATE_TEST_SUITE_P(
+    transform_composition_test_suite,
+    Test_Transform_Composition,
+    testing::Values(std::make_tuple(Transform2D(Vector2D(1., 2.)), Transform2D(), Transform2D(Vector2D(1., 2.))),
+                    std::make_tuple(Transform2D(), Transform2D(Vector2D(1., 2.)), Transform2D(Vector2D(1., 2.))),
+                    std::make_tuple(Transform2D(), Transform2D(Vector2D(1., 2.)), Transform2D(Vector2D(1., 2.))),
+                    std::make_tuple(Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(2., 0.))),
+                    std::make_tuple(Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(0., 0.), deg2rad(90.)), Transform2D(Vector2D(1., 0.), deg2rad(90.))),
+                    std::make_tuple(Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(0., 1.)), Transform2D(Vector2D(1., 1.))),
+                    std::make_tuple(Transform2D(deg2rad(90.)), Transform2D(deg2rad(45)), Transform2D(deg2rad(135.))),
+                    std::make_tuple(Transform2D(deg2rad(90.)), Transform2D(deg2rad(180)), Transform2D(deg2rad(270.)))
+
+));
 
 int main(int argc, char** argv)
 {
