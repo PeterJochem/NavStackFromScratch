@@ -186,7 +186,7 @@ Eigen::MatrixXd Transform2D::get_matrix() const {
 
 
 Transform2D & Transform2D::operator*=(const Transform2D & rhs) {
-    auto resulting_matrix = matrix * rhs.get_matrix();
+    Eigen::MatrixXd resulting_matrix = matrix * rhs.get_matrix();
     set_matrix(resulting_matrix);
     return *this;
 }

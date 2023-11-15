@@ -18,6 +18,9 @@ struct Test_Transforming_Twist2D: public testing::TestWithParam<std::tuple<Trans
 struct Test_Transform_Equals: public testing::TestWithParam<std::tuple<Transform2D, Transform2D, bool>> {};
 struct Test_Transform_Inverse: public testing::TestWithParam<Transform2D> {};
 struct Test_Transform_Composition: public testing::TestWithParam<std::tuple<Transform2D, Transform2D, Transform2D>> {};
+struct Test_Transform_Composition_Assignment: public testing::TestWithParam<std::tuple<Transform2D, Transform2D, Transform2D>> {};
+struct Test_Twist_Equals: public testing::TestWithParam<std::tuple<Twist2D, Twist2D, bool>> {};
+struct Test_Twist_Transformation: public testing::TestWithParam<std::tuple<Transform2D, Twist2D, Twist2D>> {};
 
 
 
@@ -115,6 +118,37 @@ TEST_P(Test_Transform_Composition, transform_composition) {
     EXPECT_TRUE((a_b * b_c) == a_c);
 }
 
+TEST_P(Test_Transform_Composition_Assignment, transform_composition_assignment) {
+
+    Transform2D a_b = std::get<0>(GetParam());
+    Transform2D b_c = std::get<1>(GetParam());
+    Transform2D a_c = std::get<2>(GetParam());
+    a_b *= b_c;
+    EXPECT_TRUE(a_b == a_c);
+}
+
+TEST_P(Test_Twist_Equals, twist_equals) {
+
+    Twist2D a = std::get<0>(GetParam());
+    Twist2D b = std::get<1>(GetParam());
+    bool expected_equals = std::get<2>(GetParam());
+    
+    EXPECT_TRUE((a == b) == expected_equals);
+}
+
+TEST_P(Test_Twist_Transformation, test_twist_transformation) {
+
+    Transform2D transform = std::get<0>(GetParam());
+    Twist2D twist = std::get<1>(GetParam());
+    Twist2D expected_twist = std::get<2>(GetParam());
+
+    Twist2D transformed_twist = transform(twist);
+
+    EXPECT_TRUE(transformed_twist == expected_twist);
+}
+
+
+
 INSTANTIATE_TEST_SUITE_P(
     read_vector2d_test_suite,
     Test_Vector2D_Input,
@@ -179,6 +213,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 ));
 
+
 INSTANTIATE_TEST_SUITE_P(
     transform_composition_test_suite,
     Test_Transform_Composition,
@@ -191,6 +226,35 @@ INSTANTIATE_TEST_SUITE_P(
                     std::make_tuple(Transform2D(deg2rad(90.)), Transform2D(deg2rad(45)), Transform2D(deg2rad(135.))),
                     std::make_tuple(Transform2D(deg2rad(90.)), Transform2D(deg2rad(180)), Transform2D(deg2rad(270.)))
 
+));
+
+INSTANTIATE_TEST_SUITE_P(
+    transform_composition_assignment_test_suite,
+    Test_Transform_Composition_Assignment,
+    testing::Values(std::make_tuple(Transform2D(Vector2D(1., 2.)), Transform2D(), Transform2D(Vector2D(1., 2.))),
+                    std::make_tuple(Transform2D(), Transform2D(Vector2D(1., 2.)), Transform2D(Vector2D(1., 2.))),
+                    std::make_tuple(Transform2D(), Transform2D(Vector2D(1., 2.)), Transform2D(Vector2D(1., 2.))),
+                    std::make_tuple(Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(2., 0.))),
+                    std::make_tuple(Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(0., 0.), deg2rad(90.)), Transform2D(Vector2D(1., 0.), deg2rad(90.))),
+                    std::make_tuple(Transform2D(Vector2D(1., 0.)), Transform2D(Vector2D(0., 1.)), Transform2D(Vector2D(1., 1.))),
+                    std::make_tuple(Transform2D(deg2rad(90.)), Transform2D(deg2rad(45)), Transform2D(deg2rad(135.))),
+                    std::make_tuple(Transform2D(deg2rad(90.)), Transform2D(deg2rad(180)), Transform2D(deg2rad(270.)))
+
+));
+
+INSTANTIATE_TEST_SUITE_P(
+    transform_twist_equals_test_suite,
+    Test_Twist_Equals,
+    testing::Values(std::make_tuple(Twist2D(1., 2., 3.), Twist2D(1., 2., 3.), true),
+                    std::make_tuple(Twist2D(), Twist2D(0., 0., 3.14), false)
+));
+
+INSTANTIATE_TEST_SUITE_P(
+    transform_twist_test_suite,
+    Test_Twist_Transformation,
+    testing::Values(std::make_tuple(Transform2D(), Twist2D(1., 2., 3.), Twist2D(1., 2., 3.)),
+                    std::make_tuple(Transform2D(Vector2D(0., 1.), deg2rad(90.)), Twist2D(1., 1., 1.), Twist2D(0., 1., 1.)),
+                    std::make_tuple(Transform2D(Vector2D(0., 1.), deg2rad(-90.)), Twist2D(1., 1., 1.), Twist2D(2., -1., 1))
 ));
 
 int main(int argc, char** argv)
