@@ -2,61 +2,70 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <stdlib.h>
+#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/u_int64.hpp"
+#include "std_srvs/srv/empty.hpp"
+#include "tf2_ros/transform_broadcaster.h"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+
 
 using namespace std::chrono_literals;
 
 /* This example creates a subclass of Node and uses std::bind() to register a
 * member function as a callback from the timer. */
 
-class MinimalPublisher : public rclcpp::Node
+class SimulationNode : public rclcpp::Node
 {
   public:
-    MinimalPublisher()
-    : Node("minimal_publisher"), count_(0)
+    SimulationNode()
+    : Node("simulation_node"), count_ms(0)
     {
-      publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
-      timer_ = this->create_wall_timer(
-      500ms, std::bind(&MinimalPublisher::timer_callback, this));
+
+      declare_parameter("rate", 200.);
+      declare_parameter("x0", 0.);
+      declare_parameter("y0", 0.);
+      declare_parameter("theta0", 0.);
+
+      rate_hz = get_parameter("rate").as_double();
+
+      tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+      timestep_publisher = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+      std::chrono::milliseconds rate_ms = (std::chrono::milliseconds) ((int)(1000. / rate_hz));
+      timer = this->create_wall_timer(rate_ms, std::bind(&SimulationNode::timer_callback, this));
     }
 
   private:
+    void reset(std::shared_ptr<std_srvs::srv::Empty::Request>, std::shared_ptr<std_srvs::srv::Empty::Response>)
+    {
+      RCLCPP_INFO_STREAM(get_logger(), "Resetting!");
+      count_ms = 0;
+    }
+
     void timer_callback()
     {
-      auto message = std_msgs::msg::String();
-      message.data = "Hello, world! " + std::to_string(count_++);
-      RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-      publisher_->publish(message);
+      auto message = std_msgs::msg::UInt64();
+      message.data = count_ms;
+      timestep_publisher->publish(message);
+      count_ms++;
     }
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-    size_t count_;
+
+    double rate_hz;
+    double x0, y0, theta0;
+    size_t count_ms;
+    rclcpp::TimerBase::SharedPtr timer;
+    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher;
+    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service = create_service<std_srvs::srv::Empty>("~/reset", std::bind(&SimulationNode::reset, this, std::placeholders::_1, std::placeholders::_2));
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
 };
-
-int get_rate(int argc, char* argv[]) {
-
-    int default_rate = 200;
-    if (argc <= 1) {
-        return default_rate;
-    }
-    try {
-        char* rate = argv[1];
-        return *rate;
-    }
-    catch (...) {
-        std::cout << "Failed to parse the rate parameter from the command line args. Setting to the default value." << std::endl;
-    }
-
-    return default_rate;
-}
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  int rate = get_rate(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalPublisher>());
+  rclcpp::spin(std::make_shared<SimulationNode>());
   rclcpp::shutdown();
   return 0;
 }
