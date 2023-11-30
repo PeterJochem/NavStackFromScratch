@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.8)
-project(turtle_description)
+cmake_minimum_required(VERSION 3.9)
+project(turtlelib)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -34,7 +34,7 @@ install(
 # Create the turtlelib library target
 add_library(turtlelib src/rigid2d.cpp)
 target_link_libraries(turtlelib Eigen3::Eigen)
-target_include_directories(turtlelib PUBLIC include/)
+#target_include_directories(turtlelib INTERFACE include/)
 target_compile_features(turtlelib PUBLIC cxx_std_17)
 target_compile_options(turtlelib PUBLIC -Wall -Wextra -Wpedantic)
 
@@ -63,5 +63,17 @@ if(BUILD_TESTING)
   target_link_libraries(${PROJECT_NAME}_test_executable turtlelib)
 endif()
 
+target_include_directories(turtlelib
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
+install(DIRECTORY include/turtlelib DESTINATION include)
+install(TARGETS turtlelib EXPORT turtlelib-targets)
+
+install(EXPORT turtlelib-targets
+        FILE turtlelib-config.cmake
+        NAMESPACE turtlelib::
+        DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

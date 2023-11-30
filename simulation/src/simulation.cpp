@@ -4,6 +4,8 @@
 #include <string>
 #include <stdlib.h>
 #include <memory>
+#include "turtlelib/rigid2d.hpp"
+
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -36,6 +38,7 @@ class SimulationNode : public rclcpp::Node
       timestep_publisher = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
       std::chrono::milliseconds rate_ms = (std::chrono::milliseconds) ((int)(1000. / rate_hz));
       timer = this->create_wall_timer(rate_ms, std::bind(&SimulationNode::timer_callback, this));
+      turtlelib::Transform2D world_to_base;
     }
 
   private:

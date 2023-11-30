@@ -14,12 +14,17 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(turtlelib REQUIRED)
+find_package(Eigen3 REQUIRED)
+
 
 #rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Reset.srv" LIBRARY_NAME ${PROJECT_NAME})
 #rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
 add_executable(simulator src/simulation.cpp)
 ament_target_dependencies(simulator rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros)
+
+target_link_libraries(simulator turtlelib::turtlelib "${cpp_typesupport_target}")
 
 install(TARGETS 
         simulator
