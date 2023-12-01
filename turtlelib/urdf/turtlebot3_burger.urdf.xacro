@@ -3,7 +3,7 @@
 
   <xacro:arg name="color" default="light_black" />
 
-  <xacro:property name="yaml_file" value="$(find turtle_description)/config/diff_params.yaml" />
+  <xacro:property name="yaml_file" value="$(find turtlelib)/config/diff_params.yaml" />
   <xacro:property name="diff_params" value="${xacro.load_yaml(yaml_file)}"/>
   <xacro:property name="track_width" value="${diff_params['track_width']}" />
   <xacro:property name="wheel_radius" value="${diff_params['wheel_radius']}" />
@@ -63,7 +63,7 @@
     <visual>
       <origin xyz="-0.032 0 0.0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtle_description/meshes/burger_base.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://turtlelib/meshes/burger_base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
         <material name="$(arg color)"/>
     </visual>
@@ -93,7 +93,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="1.57 0 0"/>
       <geometry>
-        <mesh filename="package://turtle_description/meshes/left_tire.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://turtlelib/meshes/left_tire.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -123,7 +123,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="1.57 0 0"/>
       <geometry>
-        <mesh filename="package://turtle_description/meshes/right_tire.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://turtlelib/meshes/right_tire.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -181,7 +181,7 @@
     <visual>
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
       <geometry>
-	      <mesh filename="package://turtle_description/meshes/lds.stl" scale="0.001 0.001 0.001"/>
+	      <mesh filename="package://turtlelib/meshes/lds.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>

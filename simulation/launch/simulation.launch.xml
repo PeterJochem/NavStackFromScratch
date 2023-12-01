@@ -1,6 +1,16 @@
 <launch>
 
-  <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share simulation)/config/simulation.rviz"/>
+  <include file="$(find-pkg-share turtlelib)/launch/load_one.launch.py">
+    <arg name="color" value="red"/>
+    <arg name="use_rviz" value="false"/>
+  </include>
+
+  <node pkg="simulation" exec="simulator">
+    <param from="$(find-pkg-share simulation)/config/basic_world.yaml"/>
+  </node>
+
+  <node pkg="rviz2" exec="rviz2" /> 
+  <!-- args="-d $(find-pkg-share simulation)/config/simulation.rviz"/ -->
 
 
 </launch>

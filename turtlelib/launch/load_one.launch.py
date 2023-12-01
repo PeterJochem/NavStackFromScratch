@@ -26,12 +26,12 @@ def generate_launch_description():
                                         TextSubstitution(text='.rviz')]),
           SetLaunchConfiguration(name='model',
                                  value=PathJoinSubstitution(
-                                   [FindPackageShare('turtle_description'),
+                                   [FindPackageShare('turtlelib'),
                                     'urdf',
                                     'turtlebot3_burger.urdf.xacro'])),
           SetLaunchConfiguration(name='rvizconfig',
                                  value=PathJoinSubstitution(
-                                   [FindPackageShare('turtle_description'),
+                                   [FindPackageShare('turtlelib'),
                                     'config',
                                     LaunchConfiguration('config_file')])),
 
