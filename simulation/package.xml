@@ -14,6 +14,7 @@
   <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>turtlelib</depend>
+  <depend>visualization_msgs</depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
   

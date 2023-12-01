@@ -16,6 +16,8 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.h"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 
 using namespace std::chrono_literals;
@@ -56,6 +58,7 @@ class SimulationNode : public rclcpp::Node
 
       tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
       timestep_publisher = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+      obstacles_publisher = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
       std::chrono::milliseconds rate_ms = (std::chrono::milliseconds) ((int)(1000. / rate_hz));
       timer = this->create_wall_timer(rate_ms, std::bind(&SimulationNode::timer_callback, this));
       world_to_base_ground_truth = turtlelib::Transform2D(turtlelib::Vector2D(x0, y0), theta0);
@@ -81,15 +84,14 @@ class SimulationNode : public rclcpp::Node
       publish_transform();
 
       // Publish the obstacles.
-      // visualization_msgs/MarkerArray
-
+      publish_obstacles();
     }
 
     void publish_transform() {
 
       geometry_msgs::msg::TransformStamped transform;
 
-      transform.header.stamp = this->get_clock()->now();
+      transform.header.stamp.sec = count_ms / 1000.;
       transform.header.frame_id = "world";
       transform.child_frame_id = "turtle_ground_truth";
 
@@ -108,15 +110,52 @@ class SimulationNode : public rclcpp::Node
       tf_broadcaster->sendTransform(transform);
     }
 
+    void publish_obstacles() {
+
+      visualization_msgs::msg::MarkerArray array;
+      for (size_t i = 0; i < obstacle_locations.size(); i++) {
+
+        visualization_msgs::msg::Marker m;
+        m.header.stamp.sec = count_ms / 1000.;
+        m.header.frame_id = "simulation/world";
+        m.id = i;         // so each has a unique ID
+        m.type = 3;       // cylinder
+        m.action = 0;     // add/modify
+        
+        // Set color as red
+        m.color.r = 1.0;
+        m.color.g = 0.0;
+        m.color.b = 0.0;
+        m.color.a = 1.0;
+        
+        // Set Radius
+        m.scale.x = 2 * obstacle_radius;
+        m.scale.y = 2 * obstacle_radius;
+        m.scale.z = 0.25;
+        m.pose.position.x = obstacle_locations[i].x;
+        m.pose.position.y = obstacle_locations[i].y;
+        m.pose.position.z = obstacle_height;
+        
+        array.markers.push_back(m);
+      }
+
+      obstacles_publisher->publish(array);
+    }
+
 
     double rate_hz;
     double x0, y0, theta0;
     size_t count_ms;
+
     rclcpp::TimerBase::SharedPtr timer;
+
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacles_publisher;
+
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service = create_service<std_srvs::srv::Empty>("~/reset", std::bind(&SimulationNode::reset, this, std::placeholders::_1, std::placeholders::_2));
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
     turtlelib::Transform2D world_to_base_ground_truth;
+
     std::vector<turtlelib::Vector2D> obstacle_locations;
     double obstacle_radius;
     double obstacle_height = 0.25;

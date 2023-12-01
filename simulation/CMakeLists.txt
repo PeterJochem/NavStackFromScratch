@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -22,7 +23,7 @@ find_package(Eigen3 REQUIRED)
 #rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
 add_executable(simulator src/simulation.cpp)
-ament_target_dependencies(simulator rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros)
+ament_target_dependencies(simulator rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros visualization_msgs)
 
 target_link_libraries(simulator turtlelib::turtlelib "${cpp_typesupport_target}")
 
